@@ -20,4 +20,6 @@ urlpatterns = [
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('login/', LoginView.as_view()),
     path('logout/', LogoutView.as_view()),
+    path('login-usuario/', UsuarioLoginView.as_view()),
+    path('logout-usuario/', UsuarioLogoutView.as_view()),
 ] + router.urls

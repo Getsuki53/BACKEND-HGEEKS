@@ -9,7 +9,7 @@ class tipoCategoria(models.Model):
 # Create your models here.
 class Persona(models.Model):
     correo = models.EmailField('Correo', blank=True)
-    contraseña = models.CharField('Contraseña', max_length = 100)
+    contrasena = models.CharField('Contraseña', max_length = 100)
     #class Meta:
     #    abstract = True
 

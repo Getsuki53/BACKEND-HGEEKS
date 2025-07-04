@@ -9,6 +9,32 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+class UsuarioLogoutView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        # Si se usa autenticación basada en tokens propios, aquí se puede invalidar el token.
+        return Response({'message': 'Logout exitoso'}, status=200)
+
+class UsuarioLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        correo = request.data.get('correo')
+        contrasena = request.data.get('contrasena')
+        if not correo or not contrasena:
+            return Response({'error': 'Debes enviar correo y contraseña'}, status=400)
+        try:
+            usuario = Usuario.objects.get(correo=correo)
+            # Si guardas contraseñas en texto plano (no recomendado):
+            if usuario.contrasena == contrasena:
+                # Aquí puedes devolver un token propio, el id, o lo que necesites
+                return Response({'message': 'Login exitoso', 'usuario_id': usuario.id}, status=200)
+            else:
+                return Response({'error': 'Contraseña incorrecta'}, status=401)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=404)
+
 class ProductoAdminViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.filter(Estado=False)
     serializer_class = ProductoSerializer
@@ -142,6 +168,28 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Contraseña actualizada exitosamente'}, status=200)
         except Usuario.DoesNotExist:
             return Response({'error': 'Usuario no encontrado'}, status=404)
+        
+    @action(detail=False, methods=['post'])
+    def CrearUsuario(self, request):  
+        nombre = request.data.get('nombre')
+        apellido = request.data.get('apellido', '')
+        foto = request.FILES.get('foto', None)
+        correo = request.data.get('correo')
+        contrasena = request.data.get('contrasena')
+        if not nombre or not correo or not contrasena:
+            return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
+        try:
+            usuario, created = Usuario.objects.get_or_create(correo=correo)
+            if created:
+                usuario.nombre = nombre
+                usuario.apellido = apellido
+                usuario.foto = foto
+                usuario.contrasena = make_password(contrasena)
+                return Response({'success': 'Usuario creado correctamente'}, status=201)
+            else:
+                return Response({'error': 'El usuario ya existe'}, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class AdministradorViewSet(viewsets.ModelViewSet):
     queryset = Administrador.objects.all()
