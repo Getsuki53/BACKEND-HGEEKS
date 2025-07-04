@@ -190,6 +190,31 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'El usuario ya existe'}, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+        
+    @action(detail=False, methods=['post'])
+
+# Si quieres editar un usuario existente, puedes usar este método
+# Si no se ingresa foto, nombre o apellido, se mantendrá lo actual
+    def EditarUsuario(self, request):
+        usuario_id = request.data.get('usuario_id')
+        nombre = request.data.get('nombre')
+        apellido = request.data.get('apellido', '')
+        foto = request.FILES.get('foto', None)
+
+        if not usuario_id or not nombre:
+            return Response({'error': 'Debes enviar usuario_id y nombre'}, status=400)
+
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+            usuario.nombre = nombre if nombre else usuario.foto
+            usuario.apellido = apellido if apellido else usuario.apellido
+            usuario.foto = foto if foto else usuario.foto  # Mantener la foto actual si no se proporciona una nueva
+            usuario.save()
+            return Response({'message': 'Usuario actualizado exitosamente'}, status=200)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=404)
+        
+    
 
 class AdministradorViewSet(viewsets.ModelViewSet):
     queryset = Administrador.objects.all()
@@ -395,6 +420,29 @@ class TiendaViewSet(viewsets.ModelViewSet):
         except Tienda.DoesNotExist:
             return Response({'error': 'Tienda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['patch'])
+    def EditarTienda(self, request):
+        tienda_id = request.data.get('tienda_id')
+        nombre_tienda = request.data.get('nombre_tienda')
+        descripcion_tienda = request.data.get('descripcion_tienda', '')
+        logo = request.FILES.get('logo', None)
+
+        if not tienda_id or not nombre_tienda:
+            return Response({'error': 'Debes enviar tienda_id y nombre_tienda'}, status=400)
+
+        try:
+            tienda = Tienda.objects.get(pk=tienda_id)
+            tienda.NomTienda = nombre_tienda if nombre_tienda else tienda.NomTienda
+            tienda.DescripcionTienda = descripcion_tienda if descripcion_tienda else tienda.DescripcionTienda
+            if logo:
+                tienda.Logo = logo
+            else:
+                tienda.Logo = tienda.Logo
+            tienda.save()
+            return Response({'message': 'Tienda actualizada exitosamente'}, status=200)
+        except Tienda.DoesNotExist:
+            return Response({'error': 'Tienda no encontrada'}, status=404)
+        
 class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
     queryset = SeguimientoTienda.objects.all()  # Assuming you want to track products in the store
     serializer_class = SeguimientoTiendaSerializer
