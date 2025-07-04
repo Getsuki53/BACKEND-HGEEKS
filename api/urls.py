@@ -14,6 +14,8 @@ router.register('tienda', TiendaViewSet)
 router.register('seguimientotienda', SeguimientoTiendaViewSet)
 router.register('producto', ProductoViewSet, basename='producto')
 router.register('productoadmin', ProductoAdminViewSet, basename='productoadmin')
+router.register('UsuarioLogin', UserViewSet, basename='usuariologin')
+router.register('UsuarioLogout', UserViewSet, basename='usuariologout')
 
 
 urlpatterns = [
