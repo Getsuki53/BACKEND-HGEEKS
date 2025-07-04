@@ -9,14 +9,14 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-class UsuarioLogoutView(APIView):
+class UsuarioLogoutView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         # Si se usa autenticación basada en tokens propios, aquí se puede invalidar el token.
         return Response({'message': 'Logout exitoso'}, status=200)
 
-class UsuarioLoginView(APIView):
+class UsuarioLoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
