@@ -89,13 +89,14 @@ WSGI_APPLICATION = 'ProyectoApi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'localhost',
+        'HOST': 'ingedb.mysql.database.azure.com',
         'PORT':'3306',
-        'USER':'root',
-        'PASSWORD':'Sharingan1.',
-        'NAME':'bdempresa2',
+        'USER':'inge',
+        'PASSWORD':'Shar1ngan',
+        'NAME':'hgeeks',
         'OPTIONS':{
-            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'"
+            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'",
+            'ssl': {'ca': '/etc/ssl/certs/BaltimoreCyberTrustRoot.crt.pem',},
         }
     }
 }
