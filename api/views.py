@@ -8,6 +8,7 @@ from django.contrib.auth import logout ,authenticate, login
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.contrib.auth.hashers import make_password
 
 class UsuarioLogoutView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -163,7 +164,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Debes enviar usuario_id y nueva_contrasena'}, status=400)
         try:
             usuario = Usuario.objects.get(pk=usuario_id)
-            usuario.set_password(nueva_contrasena)
+            usuario.contrasena = nueva_contrasena
             usuario.save()
             return Response({'message': 'Contraseña actualizada exitosamente'}, status=200)
         except Usuario.DoesNotExist:
@@ -184,7 +185,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 usuario.nombre = nombre
                 usuario.apellido = apellido
                 usuario.foto = foto
-                usuario.contrasena = make_password(contrasena)
+                usuario.contrasena = contrasena
                 return Response({'success': 'Usuario creado correctamente'}, status=201)
             else:
                 return Response({'error': 'El usuario ya existe'}, status=400)
