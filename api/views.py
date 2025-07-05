@@ -385,6 +385,18 @@ class TiendaViewSet(viewsets.ModelViewSet):
         except AttributeError:
             return Response({'error': 'El modelo Tienda debe tener un campo imagen'}, status=500)
         
+    @action(detail=False, methods=['get'])
+    def ObtenerTiendaPorPropietario(self, request):
+        propietario_id = request.query_params.get('propietario_id')
+        if not propietario_id:
+            return Response({'error': 'Debes enviar propietario_id'}, status=400)
+        try:
+            tienda = Tienda.objects.get(Propietario=propietario_id)
+            serializer = self.get_serializer(tienda)
+            return Response(serializer.data)
+        except Tienda.DoesNotExist:
+            return Response({'error': 'Tienda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        
     @action(detail=False, methods=['post'])
     def CrearTienda(self, request):
         propietario_id = request.data.get('propietario_id')
