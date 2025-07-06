@@ -225,12 +225,12 @@ class AdministradorViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def AutenticacionarAdministrador(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        if not username or not password:
-            return Response({'error': 'Debes enviar username y password'}, status=400)
+        correo = request.data.get('correo')
+        contrasena = request.data.get('contrasena')
+        if not correo or not contrasena:
+            return Response({'error': 'Debes enviar correo y contrasena'}, status=400)
         try:
-            administrador = Administrador.objects.get(username=username, password=password)
+            administrador = Administrador.objects.get(correo=correo, contrasena=contrasena)
             return Response({'message': 'Administrador autenticado exitosamente'}, status=200)
         except Administrador.DoesNotExist:
             return Response({'error': 'Administrador no encontrado o credenciales incorrectas'}, status=404)
