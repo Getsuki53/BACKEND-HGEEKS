@@ -186,7 +186,12 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 usuario.apellido = apellido
                 usuario.foto = foto
                 usuario.contrasena = contrasena
-                return Response({'success': 'Usuario creado correctamente'}, status=201)
+                usuario.save()  # <-- GUARDAR EL USUARIO PRIMERO
+                
+                # Crear un carrito asignado al usuario
+                Carrito.objects.create(usuario=usuario)  # <-- CREAR CARRITO ANTES DEL RETURN
+                
+                return Response({'success': 'Usuario creado correctamente'}, status=201)  # <-- AHORA SÍ RETURN
             else:
                 return Response({'error': 'El usuario ya existe'}, status=400)
         except Exception as e:
