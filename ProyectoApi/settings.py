@@ -49,10 +49,12 @@ INSTALLED_APPS = [
     'rest_framework', 
     'api.apps.ApiConfig',  # 'api',
     'rest_framework.authtoken',
+    'corsheaders',  # ← Agregado para CORS
 
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # ← Agregado: DEBE ser el primero
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -143,3 +145,66 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================
+# CONFIGURACIÓN DE CORS
+# ==============================
+# Permitir todas las origenes durante desarrollo (cambiar en producción)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Orígenes específicos permitidos (más específico para Flutter Web)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",      # Flutter Web
+    "http://127.0.0.1:3000",     # Flutter Web
+    "http://localhost:5000",      # Flutter Web puerto alternativo
+    "http://127.0.0.1:5000",     # Flutter Web puerto alternativo
+    "http://localhost:8080",      # Puerto alternativo
+    "http://127.0.0.1:8080",     # Puerto alternativo
+]
+
+# Headers permitidos (expandido para Flutter Web)
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'access-control-allow-origin',
+    'access-control-allow-headers',
+    'access-control-allow-methods',
+    'cache-control',
+    'pragma',
+]
+
+# Métodos HTTP permitidos
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+    'HEAD',
+]
+
+# Permitir cookies y credenciales
+CORS_ALLOW_CREDENTIALS = True
+
+# Configuraciones adicionales para resolver problemas de CORS
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 horas
+CORS_EXPOSE_HEADERS = [
+    'content-type',
+    'x-crsf-token',
+]
+
+# Deshabilitar protección CSRF para desarrollo (solo para APIs)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+]
