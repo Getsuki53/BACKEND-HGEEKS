@@ -45,7 +45,7 @@ class Producto(models.Model):
     Nomprod = models.CharField(max_length=200)
     DescripcionProd = models.CharField(blank=True, max_length=200)
     Stock = models.PositiveIntegerField(default=0)
-    FotoProd = models.ImageField(null=True, blank=True, upload_to='images/')
+    FotoProd = models.ImageField(null=False, blank=False, upload_to='images/', default='images/default-product.jpg')
     Precio = models.DecimalField(max_digits=10, decimal_places=2)
     tipoCategoria = models.ForeignKey('tipoCategoria', on_delete=models.CASCADE, verbose_name='Tipo de Categoria', null=False)   
     Estado = models.BooleanField(default=False)  

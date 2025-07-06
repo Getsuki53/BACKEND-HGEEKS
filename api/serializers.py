@@ -4,10 +4,17 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 class ProductoSerializer(serializers.ModelSerializer):
+    FotoProd = serializers.SerializerMethodField()
+    
     class Meta:
         model = Producto
         fields = '__all__'
         read_only_fields = ('created_at',)
+    
+    def get_FotoProd(self, obj):
+        if obj.FotoProd:
+            return obj.FotoProd.url
+        return '/media/images/default-product.jpg'  # URL por defecto
 
 class ProductoMainSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,7 +24,7 @@ class ProductoMainSerializer(serializers.ModelSerializer):
 class ProductoCarritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Producto
-        fields = ['Nomprod', 'Precio', 'FotoProd', 'Stock']
+        fields = [ Producto.Nomprod, Producto.Precio, Producto.FotoProd, Producto.Stock]
 
 
 class UsuarioSerializer(serializers.ModelSerializer):

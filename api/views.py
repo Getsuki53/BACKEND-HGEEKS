@@ -255,7 +255,9 @@ class ProductoDeseadoViewSet(viewsets.ModelViewSet):
         try:
             usuario = Usuario.objects.get(pk=usuario_id)
             productos_deseados = ProductoDeseado.objects.filter(usuario=usuario)
-            serializer = self.get_serializer(productos_deseados, many=True)
+            # Extraer solo los productos de las relaciones
+            productos = [pd.producto for pd in productos_deseados]
+            serializer = ProductoSerializer(productos, many=True)
             return Response(serializer.data)
         except Usuario.DoesNotExist:
             return Response({'error': 'Usuario no encontrado'}, status=404)
@@ -322,7 +324,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
-    serializer_class = ProductoSerializer
+    serializer_class = CarritoSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [authentication.BasicAuthentication,]
 
