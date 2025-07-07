@@ -328,11 +328,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
     serializer_class = ProductoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [authentication.BasicAuthentication,]
+    #permission_classes = [permissions.IsAuthenticated]
+    #authentication_classes = [authentication.BasicAuthentication,]
 
     @action(detail=False, methods=['post'])
-    def AgAlCarrito(request):
+    def AgAlCarrito(self, request):
         if request.method == 'POST':
             usuario_id = request.data.get('usuario_id')
             producto_id = request.data.get('producto_id')
