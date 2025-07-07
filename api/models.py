@@ -39,6 +39,18 @@ class Tienda(models.Model):
     def ActualizarCantidadProductos(self):
         self.Cant_productos = Producto.objects.filter(tienda=self).count()
         self.save()
+    
+    #Obtiene id de tienda con id del propietario
+    def ObtenerIdTienda(self):
+        return self.id
+    
+    @classmethod
+    def ObtenerIdTiendaPorPropietario(cls, propietario_id):
+        try:
+            tienda = cls.objects.get(Propietario_id=propietario_id)
+            return tienda.id
+        except cls.DoesNotExist:
+            return None
         
 
 class Producto(models.Model):
@@ -113,4 +125,3 @@ class Carrito(models.Model):
         indexes = [
                 models.Index(fields=['usuario', 'producto',]),
             ]
-        
