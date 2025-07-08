@@ -327,12 +327,12 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
-    serializer_class = CarritoSerializer
-    permission_classes = [permissions.AllowAny]  # ← Cambiar temporalmente
-    authentication_classes = [authentication.BasicAuthentication,]
+    serializer_class = ProductoSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+    #authentication_classes = [authentication.BasicAuthentication,]
 
     @action(detail=False, methods=['post'])
-    def AgAlCarrito(self, request):  # ← Agregar 'self'
+    def AgAlCarrito(self, request):
         if request.method == 'POST':
             usuario_id = request.data.get('usuario_id')
             producto_id = request.data.get('producto_id')
@@ -426,6 +426,57 @@ class TiendaViewSet(viewsets.ModelViewSet):
                 return Response({'message': 'La tienda ya existe'}, status=200)
         except Usuario.DoesNotExist:
             return Response({'error': 'Usuario no encontrado'}, status=404)
+    
+    @action(detail=False, methods=['post'])
+    def PublicarProductoEnTienda(self, request):
+        # Obtener datos del request
+        usuario_id = request.data.get('usuario_id')
+        nombre_producto = request.data.get('nombre_producto')
+        descripcion_producto = request.data.get('descripcion_producto', '')
+        stock = request.data.get('stock', 0)
+        precio = request.data.get('precio')
+        foto_producto = request.FILES.get('foto_producto', None)
+        tipo_categoria_id = request.data.get('tipo_categoria_id')
+
+        # Validar campos obligatorios
+        if not usuario_id or not nombre_producto or not precio or not tipo_categoria_id:
+            return Response({'error': 'Debes enviar usuario_id, nombre_producto, precio y tipo_categoria_id'}, status=400)
+
+        try:
+            # Verificar que el usuario existe
+            usuario = Usuario.objects.get(pk=usuario_id)
+            
+            # Buscar el ID de la tienda usando el método del modelo
+            tienda_id = Tienda.ObtenerIdTiendaPorPropietario(usuario_id)
+            if not tienda_id:
+                return Response({'error': 'El usuario no tiene una tienda asociada'}, status=404)
+            
+            # Obtener la tienda
+            tienda = Tienda.objects.get(pk=tienda_id)
+            
+            # Obtener la categoría
+            tipo_categoria = tipoCategoria.objects.get(pk=tipo_categoria_id)
+            
+            # Crear el producto
+            producto = Producto.objects.create(
+                Nomprod=nombre_producto,
+                DescripcionProd=descripcion_producto,
+                Stock=stock,
+                Precio=precio,
+                FotoProd=foto_producto,
+                tipoCategoria=tipo_categoria,
+                tienda=tienda,  # <-- Asignar la tienda encontrada
+                Estado=False  # Por defecto en False (pendiente de aprobación)
+            )
+            
+            return Response({'message': 'Producto publicado exitosamente', 'producto_id': producto.id}, status=201)
+            
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=404)
+        except tipoCategoria.DoesNotExist:
+            return Response({'error': 'Tipo de categoría no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
     
     @action(detail=False, methods=['get'])
     def ObtenerDetallesTienda(self, request):
