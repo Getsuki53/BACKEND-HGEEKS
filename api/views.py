@@ -328,11 +328,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
     serializer_class = CarritoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # ← Cambiar temporalmente
     authentication_classes = [authentication.BasicAuthentication,]
 
     @action(detail=False, methods=['post'])
-    def AgAlCarrito(request):
+    def AgAlCarrito(self, request):  # ← Agregar 'self'
         if request.method == 'POST':
             usuario_id = request.data.get('usuario_id')
             producto_id = request.data.get('producto_id')
@@ -374,7 +374,7 @@ class TiendaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
-    def ObtenerImgNomTiendaPorProducto(self, request):
+    def ObtenerImgNomIdTiendaPorProducto(self, request):
         producto_id = request.query_params.get('producto_id')
         if not producto_id:
             return Response({'error': 'Debes enviar producto_id'}, status=400)
@@ -383,7 +383,8 @@ class TiendaViewSet(viewsets.ModelViewSet):
             tienda = producto.tienda
             data = {
                 'nombre': tienda.NomTienda,
-                'imagen': tienda.Logo.url if tienda.Logo else None
+                'imagen': tienda.Logo.url if tienda.Logo else None,
+                'tienda_id': tienda.id
             }
             return Response(data)
         except Producto.DoesNotExist:
