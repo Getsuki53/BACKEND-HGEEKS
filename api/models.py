@@ -9,7 +9,7 @@ class tipoCategoria(models.Model):
 # Create your models here.
 class Persona(models.Model):
     correo = models.EmailField('Correo', blank=True)
-    contraseña = models.CharField('Contraseña', max_length = 100)
+    contrasena = models.CharField('Contraseña', max_length = 100)
     #class Meta:
     #    abstract = True
 
@@ -39,6 +39,20 @@ class Tienda(models.Model):
     def ActualizarCantidadProductos(self):
         self.Cant_productos = Producto.objects.filter(tienda=self).count()
         self.save()
+    
+    #Obtiene id de tienda con id del propietario
+    def ObtenerIdTienda(self):
+        return self.id
+    
+    @classmethod
+    def ObtenerIdTiendaPorPropietario(cls, propietario_id):
+        try:
+            tienda = cls.objects.get(Propietario_id=propietario_id)
+            return tienda.id
+        except cls.DoesNotExist:
+            return None
+    
+    
         
 
 class Producto(models.Model):
@@ -113,4 +127,3 @@ class Carrito(models.Model):
         indexes = [
                 models.Index(fields=['usuario', 'producto',]),
             ]
-        

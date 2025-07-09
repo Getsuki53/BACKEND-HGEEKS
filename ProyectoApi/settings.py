@@ -32,7 +32,7 @@ MEDIA_URL = '/media/'
 # Path where media is stored  
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  
 STATICFILES_DIR = (
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'media'),
 )
 
 
@@ -47,19 +47,40 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework', 
-    'api.apps.ApiConfig',  # 'api',
-    'rest_framework.authtoken',
-
+    'api.apps.ApiConfig',
+    'corsheaders',    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000"
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ROOT_URLCONF = 'ProyectoApi.urls'
@@ -85,16 +106,18 @@ WSGI_APPLICATION = 'ProyectoApi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'localhost',
+        'HOST': 'ingedb.mysql.database.azure.com',
         'PORT':'3306',
-        'USER':'root',
-        'PASSWORD':'Sharingan1.',
-        'NAME':'bdempresa2',
+        'USER':'inge',
+        'PASSWORD':'Shar1ngan',
+        'NAME':'hgeeks',
         'OPTIONS':{
-            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'"
+            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'",
+            'ssl': {'ca': '/etc/ssl/certs/BaltimoreCyberTrustRoot.crt.pem',},
         }
     }
 }
@@ -141,3 +164,78 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================
+# CONFIGURACIÓN DE CORS MEJORADA
+# ==============================
+# Permitir todas las origenes durante desarrollo (cambiar en producción)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Orígenes específicos permitidos (más específico para Flutter Web)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",      # Flutter Web
+    "http://127.0.0.1:3000",     # Flutter Web
+    "http://localhost:5000",      # Flutter Web puerto alternativo
+    "http://127.0.0.1:5000",     # Flutter Web puerto alternativo
+    "http://localhost:8080",      # Puerto alternativo
+    "http://127.0.0.1:8080",     # Puerto alternativo
+    "http://localhost:80",        # Puerto 80
+    "http://127.0.0.1:80",       # Puerto 80
+]
+
+# Headers permitidos (expandido para Flutter Web)
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'access-control-allow-origin',
+    'access-control-allow-headers',
+    'access-control-allow-methods',
+    'cache-control',
+    'pragma',
+    'x-forwarded-for',
+    'x-forwarded-proto',
+]
+
+# Métodos HTTP permitidos
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+    'HEAD',
+]
+
+# Permitir cookies y credenciales
+CORS_ALLOW_CREDENTIALS = True
+
+# Configuraciones adicionales para resolver problemas de CORS
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 horas
+CORS_EXPOSE_HEADERS = [
+    'content-type',
+    'x-csrf-token',
+    'authorization',
+]
+
+# Deshabilitar protección CSRF para desarrollo (solo para APIs)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+
+# Configuración adicional para APIs
+CSRF_COOKIE_SECURE = False  # Solo en desarrollo
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False  # Solo en desarrollo
