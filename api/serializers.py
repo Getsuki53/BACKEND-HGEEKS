@@ -4,27 +4,66 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 class ProductoSerializer(serializers.ModelSerializer):
+    FotoProd = serializers.SerializerMethodField()
+    
     class Meta:
         model = Producto
         fields = '__all__'
         read_only_fields = ('created_at',)
+    
+    def get_FotoProd(self, obj):
+        if obj.FotoProd:
+            # Si ya es una URL completa, devolverla tal como está
+            if obj.FotoProd.url.startswith('http'):
+                return obj.FotoProd.url
+            # Si no, agregar el dominio de Cloudinary
+            return f"https://res.cloudinary.com/devfncp85/{obj.FotoProd.url}"
+        return None
 
 class ProductoMainSerializer(serializers.ModelSerializer):
+    FotoProd = serializers.SerializerMethodField()
+    
     class Meta:
         model = Producto
         fields = ['Nomprod', 'Precio', 'FotoProd']
+    
+    def get_FotoProd(self, obj):
+        if obj.FotoProd:
+            if obj.FotoProd.url.startswith('http'):
+                return obj.FotoProd.url
+            return f"https://res.cloudinary.com/devfncp85/{obj.FotoProd.url}"
+        return None
 
-class ProductoCarritoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Producto
-        fields = ['Nomprod', 'Precio', 'FotoProd', 'Stock']
-
-
+# Hacer lo mismo para UsuarioSerializer y TiendaSerializer
 class UsuarioSerializer(serializers.ModelSerializer):
+    foto = serializers.SerializerMethodField()
+    
     class Meta:
         model = Usuario
         fields = '__all__'
+    
+    def get_foto(self, obj):
+        if obj.foto:
+            if obj.foto.url.startswith('http'):
+                return obj.foto.url
+            return f"https://res.cloudinary.com/devfncp85/{obj.foto.url}"
+        return None
 
+class TiendaSerializer(serializers.ModelSerializer):
+    Logo = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Tienda
+        fields = '__all__'
+    
+    def get_Logo(self, obj):
+        if obj.Logo:
+            if obj.Logo.url.startswith('http'):
+                return obj.Logo.url
+            return f"https://res.cloudinary.com/devfncp85/{obj.Logo.url}"
+        return None
+
+# Resto de tus serializers...
 class AdministradorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Administrador
@@ -50,22 +89,15 @@ class CarritoSerializer(serializers.ModelSerializer):
         model = Carrito
         fields = '__all__'
 
-class TiendaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tienda
-        fields = '__all__'
-
 class SeguimientoTiendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = SeguimientoTienda
         fields = '__all__'
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'first_name', 'last_name', 'username', 'password', 'groups', 'email']
-         #esconder password
         extra_kwargs = {
             'password': {'write_only': True, 'required': True}
         }
