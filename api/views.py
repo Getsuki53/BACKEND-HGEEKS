@@ -177,23 +177,29 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         foto = request.FILES.get('foto', None)
         correo = request.data.get('correo')
         contrasena = request.data.get('contrasena')
+        
         if not nombre or not correo or not contrasena:
             return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
+        
         try:
-            usuario, created = Usuario.objects.get_or_create(correo=correo)
-            if created:
-                usuario.nombre = nombre
-                usuario.apellido = apellido
-                usuario.foto = foto
-                usuario.contrasena = contrasena
-                usuario.save()  # <-- GUARDAR EL USUARIO PRIMERO
-                
-                # Crear un carrito asignado al usuario
-                Carrito.objects.create(usuario=usuario)  # <-- CREAR CARRITO ANTES DEL RETURN
-                
-                return Response({'success': 'Usuario creado correctamente'}, status=201)  # <-- AHORA SÍ RETURN
-            else:
+            # Verificar si el usuario ya existe
+            if Usuario.objects.filter(correo=correo).exists():
                 return Response({'error': 'El usuario ya existe'}, status=400)
+            
+            # Crear el usuario con todos los campos
+            usuario = Usuario.objects.create(
+                nombre=nombre,
+                apellido=apellido,
+                foto=foto,
+                correo=correo,
+                contrasena=contrasena
+            )
+            
+            # Crear un carrito asignado al usuario
+            Carrito.objects.create(usuario=usuario)
+            
+            return Response({'success': 'Usuario creado correctamente'}, status=201)
+            
         except Exception as e:
             return Response({'error': str(e)}, status=500)
         
