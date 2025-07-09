@@ -195,13 +195,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         correo = request.data.get('correo')
         contrasena = request.data.get('contrasena')
         
-        
         if not nombre or not correo or not contrasena:
             return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
-        
-        try:
-            # Verificar si el usuario ya existe
-            if Usuario.objects.filter(correo=correo).exists():
         
         try:
             # Verificar si el usuario ya existe
