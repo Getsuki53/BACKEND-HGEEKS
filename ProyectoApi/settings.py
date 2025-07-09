@@ -46,7 +46,7 @@ else:
     DEBUG = True
     ALLOWED_HOSTS = ['*']
 
-# Tu base de datos MySQL de Azure (para desarrollo Y producción)
+# Configuración de base de datos con SSL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -57,7 +57,9 @@ DATABASES = {
         'NAME': 'hgeeks',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'ssl': {},
+            'ssl': {
+                'ssl_ca': '/opt/render/project/src/BaltimoreCyberTrustRoot.crt.pem'
+            } if 'RENDER' in os.environ else {},
         }
     }
 }
