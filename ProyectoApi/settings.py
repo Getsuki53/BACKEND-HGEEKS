@@ -58,6 +58,7 @@ DATABASES = {
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'ssl': {
+                'ca': os.path.join(BASE_DIR, 'BaltimoreCyberTrustRoot.crt.pem'),
                 'ssl_disabled': False,
                 'ssl_verify_cert': False,
                 'ssl_verify_identity': False
