@@ -195,8 +195,13 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         correo = request.data.get('correo')
         contrasena = request.data.get('contrasena')
         
+        
         if not nombre or not correo or not contrasena:
             return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
+        
+        try:
+            # Verificar si el usuario ya existe
+            if Usuario.objects.filter(correo=correo).exists():
         
         try:
             # Verificar si el usuario ya existe
@@ -393,6 +398,27 @@ class TiendaViewSet(viewsets.ModelViewSet):
     serializer_class = TiendaSerializer 
     permission_classes = [permissions.AllowAny]
     authentication_classes = [authentication.BasicAuthentication,]
+
+
+    # En tu archivo de views/endpoints de tienda
+    @action(detail=False, methods=['get'])
+    def VerificarPropietarioPorProducto(self, request):
+        producto_id = request.query_params.get('producto_id')
+        usuario_id = request.query_params.get('usuario_id')
+        
+        if not producto_id or not usuario_id:
+            return Response({'error': 'Debes enviar producto_id y usuario_id'}, status=400)
+        
+        try:
+            producto = Producto.objects.get(pk=producto_id)
+            if producto.tienda.Propietario.id == int(usuario_id):
+                return Response({'es_propietario': True, 'message': 'El usuario es propietario del producto'}, status=200)
+            else:
+                return Response({'es_propietario': False, 'message': 'El usuario no es propietario del producto'}, status=200)
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=False, methods=['get'])
     def buscar(self, request):

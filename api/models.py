@@ -51,6 +51,8 @@ class Tienda(models.Model):
             return tienda.id
         except cls.DoesNotExist:
             return None
+    
+    
         
 
 class Producto(models.Model):
