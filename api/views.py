@@ -37,7 +37,11 @@ class UsuarioLoginView(views.APIView):
             # Si guardas contraseñas en texto plano (no recomendado):
             if usuario.contrasena == contrasena:
                 # Aquí puedes devolver un token propio, el id, o lo que necesites
-                return Response({'message': 'Login exitoso', 'usuario_id': usuario.id}, status=200)
+                return Response({
+                    'message': 'Login exitoso',
+                    'usuario_id': usuario.id,
+                    'tipo_usuario': 'usuario'
+                }, status=200)
             else:
                 return Response({'error': 'Contraseña incorrecta'}, status=401)
         except Usuario.DoesNotExist:
@@ -149,6 +153,19 @@ class ProductoViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Estado del producto actualizado exitosamente'}, status=200)
         except Producto.DoesNotExist:
             return Response({'error': 'Producto no encontrado'}, status=404)
+    
+    @action(detail=False, methods=['post'])
+    def ObtenerProductoPorNombre(self, request):
+        Nomprod = request.data.get('Nomprod')
+        if not Nomprod:
+            return Response({'error': 'Debes enviar el parÃ¡metro NomProd'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        productos = Producto.objects.filter(Nomprod__icontains=Nomprod)
+        if not productos.exists():
+            return Response({'mensaje': 'No se encontraron productos que coincidan'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProductoSerializer(productos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
             
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -184,23 +201,33 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         foto = request.FILES.get('foto', None)
         correo = request.data.get('correo')
         contrasena = request.data.get('contrasena')
+        
         if not nombre or not correo or not contrasena:
             return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
+        
         try:
-            usuario, created = Usuario.objects.get_or_create(correo=correo)
-            if created:
-                usuario.nombre = nombre
-                usuario.apellido = apellido
-                usuario.foto = foto
-                usuario.contrasena = contrasena
-                usuario.save()  # <-- GUARDAR EL USUARIO PRIMERO
-                
-                # Crear un carrito asignado al usuario
-                Carrito.objects.create(usuario=usuario)  # <-- CREAR CARRITO ANTES DEL RETURN
-                
-                return Response({'success': 'Usuario creado correctamente'}, status=201)  # <-- AHORA SÍ RETURN
-            else:
+            # Verificar si el usuario ya existe
+            if Usuario.objects.filter(correo=correo).exists():
                 return Response({'error': 'El usuario ya existe'}, status=400)
+            
+            # Crear el usuario con todos los campos
+            usuario = Usuario.objects.create(
+                nombre=nombre,
+                apellido=apellido,
+                foto=foto,
+                correo=correo,
+                contrasena=contrasena
+            )
+            
+            #CAMBIOO
+            # No es necesario crear un carrito vacío aquí
+            # El carrito se creará cuando el usuario agregue su primer producto
+
+            # Crear un carrito asignado al usuario
+            # Carrito.objects.create(usuario=usuario)
+            
+            return Response({'success': 'Usuario creado correctamente'}, status=201)
+            
         except Exception as e:
             return Response({'error': str(e)}, status=500)
         
@@ -243,7 +270,11 @@ class AdministradorViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Debes enviar correo y contrasena'}, status=400)
         try:
             administrador = Administrador.objects.get(correo=correo, contrasena=contrasena)
-            return Response({'message': 'Administrador autenticado exitosamente'}, status=200)
+            return Response({
+                'message': 'Administrador autenticado exitosamente',
+                'admin_id': administrador.id,
+                'tipo_usuario': 'administrador'
+            }, status=200)
         except Administrador.DoesNotExist:
             return Response({'error': 'Administrador no encontrado o credenciales incorrectas'}, status=404)
 
@@ -334,7 +365,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
-    serializer_class = ProductoSerializer
+    serializer_class = CarritoSerializer
     #permission_classes = [permissions.IsAuthenticated]
     #authentication_classes = [authentication.BasicAuthentication,]
 
@@ -364,11 +395,100 @@ class CarritoViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
         return Response({'error': 'Método no permitido'}, status=405)
 
+    @action(detail=False, methods=['delete'])
+    def EliminarProductodelCarrito(self, request):
+        if request.method == 'DELETE':
+            usuario_id = request.data.get('usuario_id')
+            producto_id = request.data.get('producto_id')
+            if not usuario_id or not producto_id:
+                return Response({'error': 'Debes enviar usuario_id y producto_id'}, status=400)
+            try:
+                usuario = Usuario.objects.get(pk=usuario_id)
+                producto = Producto.objects.get(pk=producto_id)
+                carrito = Carrito.objects.filter(usuario=usuario, producto=producto).first()
+                if carrito:
+                    carrito.delete()
+                    return Response({'message': 'Producto eliminado del carrito exitosamente'}, status=200)
+                else:
+                    return Response({'message': 'El producto no está en el carrito'}, status=404)
+            except (Usuario.DoesNotExist, Producto.DoesNotExist):
+                return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
+        return Response({'error': 'Método no permitido'}, status=405)
+    
+    @action(detail=False, methods=['patch'])
+    def ActualizarCantidadCarrito(self, request):
+        usuario_id = request.data.get('usuario_id')
+        producto_id = request.data.get('producto_id')
+        nueva_cantidad = request.data.get('nueva_cantidad')
+        
+        if not usuario_id or not producto_id or nueva_cantidad is None:
+            return Response({'error': 'Debes enviar usuario_id, producto_id y nueva_cantidad'}, status=400)
+        
+        if nueva_cantidad < 0:
+            return Response({'error': 'La cantidad no puede ser negativa'}, status=400)
+            
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+            producto = Producto.objects.get(pk=producto_id)
+            carrito = Carrito.objects.filter(usuario=usuario, producto=producto).first()
+            
+            if carrito:
+                # Si la cantidad es 0, eliminar el producto del carrito
+                if nueva_cantidad == 0:
+                    carrito.delete()
+                    return Response({
+                        'message': 'Producto eliminado del carrito',
+                        'eliminado': True
+                    }, status=200)
+                
+                # Verificar que no exceda el stock disponible
+                if nueva_cantidad > producto.Stock:
+                    return Response({
+                        'error': f'Cantidad solicitada ({nueva_cantidad}) excede el stock disponible ({producto.Stock})'
+                    }, status=400)
+                
+                carrito.unidades = nueva_cantidad
+                carrito.valortotal = producto.Precio * nueva_cantidad
+                carrito.save()
+                return Response({
+                    'message': 'Cantidad actualizada exitosamente',
+                    'nueva_cantidad': nueva_cantidad,
+                    'nuevo_total': float(carrito.valortotal),
+                    'eliminado': False
+                }, status=200)
+            else:
+                return Response({'error': 'El producto no está en el carrito'}, status=404)
+        except (Usuario.DoesNotExist, Producto.DoesNotExist):
+            return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)    
+    
 class TiendaViewSet(viewsets.ModelViewSet):
     queryset = Tienda.objects.all()  # Assuming you want to list products in the store
     serializer_class = TiendaSerializer 
     permission_classes = [permissions.AllowAny]
     authentication_classes = [authentication.BasicAuthentication,]
+
+
+    # En tu archivo de views/endpoints de tienda
+    @action(detail=False, methods=['get'])
+    def VerificarPropietarioPorProducto(self, request):
+        producto_id = request.query_params.get('producto_id')
+        usuario_id = request.query_params.get('usuario_id')
+        
+        if not producto_id or not usuario_id:
+            return Response({'error': 'Debes enviar producto_id y usuario_id'}, status=400)
+        
+        try:
+            producto = Producto.objects.get(pk=producto_id)
+            if producto.tienda.Propietario.id == int(usuario_id):
+                return Response({'es_propietario': True, 'message': 'El usuario es propietario del producto'}, status=200)
+            else:
+                return Response({'es_propietario': False, 'message': 'El usuario no es propietario del producto'}, status=200)
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=False, methods=['get'])
     def buscar(self, request):
@@ -552,6 +672,23 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
         except Tienda.DoesNotExist:
             return Response({'error': 'Tienda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['get'])
+    def VerificarSeguimiento(self, request):
+        usuario_id = request.query_params.get('usuario_id')
+        tienda_id = request.query_params.get('tienda_id')
+        if not usuario_id or not tienda_id:
+            return Response({'error': 'Debes enviar usuario_id y tienda_id'}, status=400)
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+            tienda = Tienda.objects.get(pk=tienda_id)
+            seguimiento = SeguimientoTienda.objects.filter(usuario=usuario, tienda=tienda).first()
+            if seguimiento:
+                return Response({'sigue': True, 'message': 'El usuario sigue esta tienda'}, status=200)
+            else:
+                return Response({'sigue': False, 'message': 'El usuario no sigue esta tienda'}, status=200)
+        except (Usuario.DoesNotExist, Tienda.DoesNotExist):
+            return Response({'error': 'Usuario o Tienda no encontrado'}, status=404)
+
     @action(detail=False, methods=['post'])   
     def AgregarSeguimientoTienda(self, request):
         usuario_id = request.data.get('usuario_id')
@@ -563,11 +700,10 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
             tienda = Tienda.objects.get(pk=tienda_id)
             seguimiento, created = SeguimientoTienda.objects.get_or_create(usuario=usuario, tienda=tienda)
             #Subir la cantidad de seguidores de la tienda
-            if seguimiento.tienda:
-                seguimiento.tienda.CantidadSeguidores += 1
-                seguimiento.tienda.save()
             if created:
-                return Response({'message': 'Ahora sigues la tienda exitosamente'}, status=201)
+                seguimiento.tienda.Cant_seguidores += 1
+                seguimiento.tienda.save()
+                return Response({'message': 'Ahora sigues la tienda'}, status=201)
             else:
                 return Response({'message': 'Ya sigues esta tienda'}, status=200)
         except (Usuario.DoesNotExist, Tienda.DoesNotExist):
@@ -585,7 +721,10 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
             seguimiento = SeguimientoTienda.objects.filter(usuario=usuario, tienda=tienda).first()
             if seguimiento:
                 seguimiento.delete()
-                return Response({'message': 'Has dejado de seguir la tienda exitosamente'}, status=200)
+                # Disminuir la cantidad de seguidores de la tienda
+                tienda.Cant_seguidores = max(0, tienda.Cant_seguidores - 1)
+                tienda.save()
+                return Response({'message': 'Has dejado de seguir la tienda'}, status=200)
             else:
                 return Response({'message': 'No estabas siguiendo esta tienda'}, status=404)
         except (Usuario.DoesNotExist, Tienda.DoesNotExist):
