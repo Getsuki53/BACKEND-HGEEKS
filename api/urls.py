@@ -1,5 +1,5 @@
 from rest_framework import routers
-from api.views import ProductoViewSet, UsuarioViewSet, UserViewSet, LogoutView , LoginView, AdministradorViewSet, VentaViewSet, ProductoDeseadoViewSet, tipoCategoriaViewSet, CarritoViewSet, TiendaViewSet, SeguimientoTiendaViewSet, ProductoAdminViewSet, UsuarioLoginView, UsuarioLogoutView
+from api.views import ProductoViewSet, UsuarioViewSet, UserViewSet, LogoutView , LoginView, AdministradorViewSet, VentaViewSet, ProductoDeseadoViewSet, tipoCategoriaViewSet, CarritoViewSet, TiendaViewSet, SeguimientoTiendaViewSet, ProductoAdminViewSet, UsuarioLoginView, UsuarioLogoutView, IniciarMercadoPago, RegistrarPago
 from rest_framework.authtoken.views import obtain_auth_token
 from django.urls import path
 router  = routers.DefaultRouter()
@@ -23,4 +23,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view()),
     path('login-usuario/', UsuarioLoginView.as_view()),
     path('logout-usuario/', UsuarioLogoutView.as_view()),
+    path('mercadopago/iniciar/', IniciarMercadoPago.as_view(), name='iniciar-mercadopago'),
+    path('venta/registrar/', RegistrarPago, name='registrar-pago'),
 ] + router.urls

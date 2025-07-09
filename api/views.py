@@ -9,6 +9,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
+from rest_framework.views import APIView
+from rest_framework import status
+import mercadopago
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+import json
 
 class UsuarioLogoutView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -618,3 +625,78 @@ class LogoutView(views.APIView):
         # Devolvemos la respuesta al cliente
         return response.Response({'message':'Sessión Cerrada y Token Eliminado !!!!'},status=status.HTTP_200_OK)
 
+@method_decorator(csrf_exempt, name='dispatch')
+class IniciarMercadoPago(APIView):
+    def post(self, request):
+        usuario_id = request.data.get('usuario_id')
+        if not usuario_id:
+            return Response({'error': 'usuario_id es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verifica que el usuario exista
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Obtén los productos del carrito
+        carrito_items = Carrito.objects.filter(usuario=usuario)
+        if not carrito_items.exists():
+            return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Configura tu access_token de MercadoPago
+        sdk = mercadopago.SDK("TEST-7564814394299669-062820-cb38adf09500d7f7cab89cda757c9882-230001938")
+
+        # Arma la preferencia con los productos del carrito
+        items = []
+        for item in carrito_items:
+            producto = item.producto
+            items.append({
+                "title": producto.Nomprod,
+                "quantity": item.unidades,
+                "currency_id": "CLP",  
+                "unit_price": float(producto.Precio)
+            })
+
+
+        preference_data = {
+            "items": items,
+            "payer": {
+                "email": usuario.correo
+            }
+        }
+
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+
+        return Response({
+            "init_point": preference.get("init_point")
+        }, status=status.HTTP_200_OK)
+
+@csrf_exempt
+@api_view(['POST'])
+def RegistrarPago(request):
+    """
+    Endpoint para simular un pago exitoso: registra la venta, actualiza stock y limpia el carrito.
+    Recibe: { "usuario_id": <id> }
+    """
+    usuario_id = request.data.get('usuario_id')
+    if not usuario_id:
+        return Response({'error': 'Debes enviar usuario_id'}, status=400)
+    try:
+        usuario = Usuario.objects.get(pk=usuario_id)
+    except Usuario.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=404)
+    carrito_items = Carrito.objects.filter(usuario=usuario)
+    if not carrito_items.exists():
+        return Response({'error': 'El carrito está vacío'}, status=400)
+    for item in carrito_items:
+        producto = item.producto
+        Venta.objects.create(
+            comprador=usuario,
+            productoComprado=producto,
+            cantidad=item.unidades
+        )
+        producto.Stock -= item.unidades
+        producto.save()
+    carrito_items.delete()
+    return Response({'message': 'Venta registrada y carrito limpio'}, status=200)
