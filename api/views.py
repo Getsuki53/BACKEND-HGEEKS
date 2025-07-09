@@ -30,7 +30,11 @@ class UsuarioLoginView(views.APIView):
             # Si guardas contraseñas en texto plano (no recomendado):
             if usuario.contrasena == contrasena:
                 # Aquí puedes devolver un token propio, el id, o lo que necesites
-                return Response({'message': 'Login exitoso', 'usuario_id': usuario.id}, status=200)
+                return Response({
+                    'message': 'Login exitoso',
+                    'usuario_id': usuario.id,
+                    'tipo_usuario': 'usuario'
+                }, status=200)
             else:
                 return Response({'error': 'Contraseña incorrecta'}, status=401)
         except Usuario.DoesNotExist:
@@ -142,6 +146,19 @@ class ProductoViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Estado del producto actualizado exitosamente'}, status=200)
         except Producto.DoesNotExist:
             return Response({'error': 'Producto no encontrado'}, status=404)
+    
+    @action(detail=False, methods=['post'])
+    def ObtenerProductoPorNombre(self, request):
+        Nomprod = request.data.get('Nomprod')
+        if not Nomprod:
+            return Response({'error': 'Debes enviar el parÃ¡metro NomProd'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        productos = Producto.objects.filter(Nomprod__icontains=Nomprod)
+        if not productos.exists():
+            return Response({'mensaje': 'No se encontraron productos que coincidan'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProductoSerializer(productos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
             
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -177,23 +194,33 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         foto = request.FILES.get('foto', None)
         correo = request.data.get('correo')
         contrasena = request.data.get('contrasena')
+        
         if not nombre or not correo or not contrasena:
             return Response({'error': 'Debes enviar nombre, correo y contraseña'}, status=400)
+        
         try:
-            usuario, created = Usuario.objects.get_or_create(correo=correo)
-            if created:
-                usuario.nombre = nombre
-                usuario.apellido = apellido
-                usuario.foto = foto
-                usuario.contrasena = contrasena
-                usuario.save()  # <-- GUARDAR EL USUARIO PRIMERO
-                
-                # Crear un carrito asignado al usuario
-                Carrito.objects.create(usuario=usuario)  # <-- CREAR CARRITO ANTES DEL RETURN
-                
-                return Response({'success': 'Usuario creado correctamente'}, status=201)  # <-- AHORA SÍ RETURN
-            else:
+            # Verificar si el usuario ya existe
+            if Usuario.objects.filter(correo=correo).exists():
                 return Response({'error': 'El usuario ya existe'}, status=400)
+            
+            # Crear el usuario con todos los campos
+            usuario = Usuario.objects.create(
+                nombre=nombre,
+                apellido=apellido,
+                foto=foto,
+                correo=correo,
+                contrasena=contrasena
+            )
+            
+            #CAMBIOO
+            # No es necesario crear un carrito vacío aquí
+            # El carrito se creará cuando el usuario agregue su primer producto
+
+            # Crear un carrito asignado al usuario
+            # Carrito.objects.create(usuario=usuario)
+            
+            return Response({'success': 'Usuario creado correctamente'}, status=201)
+            
         except Exception as e:
             return Response({'error': str(e)}, status=500)
         
@@ -236,7 +263,11 @@ class AdministradorViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Debes enviar correo y contrasena'}, status=400)
         try:
             administrador = Administrador.objects.get(correo=correo, contrasena=contrasena)
-            return Response({'message': 'Administrador autenticado exitosamente'}, status=200)
+            return Response({
+                'message': 'Administrador autenticado exitosamente',
+                'admin_id': administrador.id,
+                'tipo_usuario': 'administrador'
+            }, status=200)
         except Administrador.DoesNotExist:
             return Response({'error': 'Administrador no encontrado o credenciales incorrectas'}, status=404)
 

@@ -48,15 +48,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework', 
     'api.apps.ApiConfig',
-    'corsheaders',         # <-- Solo una vez
-    'rest_framework.authtoken',
+    'corsheaders',    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # <-- Solo una vez
-    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',  # <-- Solo una vez
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -66,6 +64,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000"
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -167,7 +166,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ==============================
-# CONFIGURACIÓN DE CORS
+# CONFIGURACIÓN DE CORS MEJORADA
 # ==============================
 # Permitir todas las origenes durante desarrollo (cambiar en producción)
 CORS_ALLOW_ALL_ORIGINS = True
@@ -180,6 +179,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5000",     # Flutter Web puerto alternativo
     "http://localhost:8080",      # Puerto alternativo
     "http://127.0.0.1:8080",     # Puerto alternativo
+    "http://localhost:80",        # Puerto 80
+    "http://127.0.0.1:80",       # Puerto 80
 ]
 
 # Headers permitidos (expandido para Flutter Web)
@@ -198,6 +199,8 @@ CORS_ALLOW_HEADERS = [
     'access-control-allow-methods',
     'cache-control',
     'pragma',
+    'x-forwarded-for',
+    'x-forwarded-proto',
 ]
 
 # Métodos HTTP permitidos
@@ -218,7 +221,8 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 86400  # 24 horas
 CORS_EXPOSE_HEADERS = [
     'content-type',
-    'x-crsf-token',
+    'x-csrf-token',
+    'authorization',
 ]
 
 # Deshabilitar protección CSRF para desarrollo (solo para APIs)
@@ -227,4 +231,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:5000",
     "http://127.0.0.1:5000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
+
+# Configuración adicional para APIs
+CSRF_COOKIE_SECURE = False  # Solo en desarrollo
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False  # Solo en desarrollo
