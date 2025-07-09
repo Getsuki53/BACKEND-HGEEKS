@@ -358,7 +358,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()  # Assuming you want to list products in the cart
-    serializer_class = ProductoSerializer
+    serializer_class = CarritoSerializer
     #permission_classes = [permissions.IsAuthenticated]
     #authentication_classes = [authentication.BasicAuthentication,]
 
@@ -388,6 +388,74 @@ class CarritoViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
         return Response({'error': 'Método no permitido'}, status=405)
 
+    @action(detail=False, methods=['delete'])
+    def EliminarProductodelCarrito(self, request):
+        if request.method == 'DELETE':
+            usuario_id = request.data.get('usuario_id')
+            producto_id = request.data.get('producto_id')
+            if not usuario_id or not producto_id:
+                return Response({'error': 'Debes enviar usuario_id y producto_id'}, status=400)
+            try:
+                usuario = Usuario.objects.get(pk=usuario_id)
+                producto = Producto.objects.get(pk=producto_id)
+                carrito = Carrito.objects.filter(usuario=usuario, producto=producto).first()
+                if carrito:
+                    carrito.delete()
+                    return Response({'message': 'Producto eliminado del carrito exitosamente'}, status=200)
+                else:
+                    return Response({'message': 'El producto no está en el carrito'}, status=404)
+            except (Usuario.DoesNotExist, Producto.DoesNotExist):
+                return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
+        return Response({'error': 'Método no permitido'}, status=405)
+    
+    @action(detail=False, methods=['patch'])
+    def ActualizarCantidadCarrito(self, request):
+        usuario_id = request.data.get('usuario_id')
+        producto_id = request.data.get('producto_id')
+        nueva_cantidad = request.data.get('nueva_cantidad')
+        
+        if not usuario_id or not producto_id or nueva_cantidad is None:
+            return Response({'error': 'Debes enviar usuario_id, producto_id y nueva_cantidad'}, status=400)
+        
+        if nueva_cantidad < 0:
+            return Response({'error': 'La cantidad no puede ser negativa'}, status=400)
+            
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+            producto = Producto.objects.get(pk=producto_id)
+            carrito = Carrito.objects.filter(usuario=usuario, producto=producto).first()
+            
+            if carrito:
+                # Si la cantidad es 0, eliminar el producto del carrito
+                if nueva_cantidad == 0:
+                    carrito.delete()
+                    return Response({
+                        'message': 'Producto eliminado del carrito',
+                        'eliminado': True
+                    }, status=200)
+                
+                # Verificar que no exceda el stock disponible
+                if nueva_cantidad > producto.Stock:
+                    return Response({
+                        'error': f'Cantidad solicitada ({nueva_cantidad}) excede el stock disponible ({producto.Stock})'
+                    }, status=400)
+                
+                carrito.unidades = nueva_cantidad
+                carrito.valortotal = producto.Precio * nueva_cantidad
+                carrito.save()
+                return Response({
+                    'message': 'Cantidad actualizada exitosamente',
+                    'nueva_cantidad': nueva_cantidad,
+                    'nuevo_total': float(carrito.valortotal),
+                    'eliminado': False
+                }, status=200)
+            else:
+                return Response({'error': 'El producto no está en el carrito'}, status=404)
+        except (Usuario.DoesNotExist, Producto.DoesNotExist):
+            return Response({'error': 'Usuario o Producto no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)    
+    
 class TiendaViewSet(viewsets.ModelViewSet):
     queryset = Tienda.objects.all()  # Assuming you want to list products in the store
     serializer_class = TiendaSerializer 
