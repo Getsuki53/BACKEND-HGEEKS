@@ -38,18 +38,29 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET', default='_EhddXk2IJtd7bjU8ZTuCusdN0Y')
 )
 
-ALLOWED_HOSTS = ['*']
-# Base url to serve media files  
-MEDIA_URL = '/media/'  
-# Path where media is stored  
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  
-STATICFILES_DIR = (
-    os.path.join(BASE_DIR, 'media'),
-)
+# Detectar si estamos en producción
+if 'RENDER' in os.environ:
+    DEBUG = False
+    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
+else:
+    DEBUG = True
+    ALLOWED_HOSTS = ['*']
 
-
-
-# Application definition
+# Tu base de datos MySQL de Azure (para desarrollo Y producción)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': 'ingedb.mysql.database.azure.com',
+        'PORT': '3306',
+        'USER': 'inge',
+        'PASSWORD': 'Shar1ngan',
+        'NAME': 'hgeeks',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'ssl': {},
+        }
+    }
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,15 +69,23 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework', 
+    'rest_framework',
     'api.apps.ApiConfig',
-    'corsheaders',    'rest_framework.authtoken',
-    'cloudinary_storage',  # <-- AGREGAR ANTES DE cloudinary
-    'cloudinary',          # <-- AGREGAR ESTO
+    'corsheaders',
+    'rest_framework.authtoken',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
+# Configuración de archivos estáticos
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Whitenoise para servir archivos estáticos en producción
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- Agregar esto
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,129 +94,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000"
-]
+# Cloudinary como almacenamiento por defecto
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
+# Tu configuración existente de CORS
 CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
-
-ROOT_URLCONF = 'ProyectoApi.urls'
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-WSGI_APPLICATION = 'ProyectoApi.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'ingedb.mysql.database.azure.com',
-        'PORT':'3306',
-        'USER':'inge',
-        'PASSWORD':'Shar1ngan',
-        'NAME':'hgeeks',
-        'OPTIONS':{
-            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'",
-            'ssl': {'ca': '/etc/ssl/certs/BaltimoreCyberTrustRoot.crt.pem',},
-        }
-    }
-}
-
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ==============================
-# CONFIGURACIÓN DE CORS MEJORADA
-# ==============================
-# Permitir todas las origenes durante desarrollo (cambiar en producción)
-CORS_ALLOW_ALL_ORIGINS = True
-
-# Orígenes específicos permitidos (más específico para Flutter Web)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",      # Flutter Web
-    "http://127.0.0.1:3000",     # Flutter Web
-    "http://localhost:5000",      # Flutter Web puerto alternativo
-    "http://127.0.0.1:5000",     # Flutter Web puerto alternativo
-    "http://localhost:8080",      # Puerto alternativo
-    "http://127.0.0.1:8080",     # Puerto alternativo
-    "http://localhost:80",        # Puerto 80
-    "http://127.0.0.1:80",       # Puerto 80
-]
-
-# Headers permitidos (expandido para Flutter Web)
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -253,6 +156,3 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SECURE = False  # Solo en desarrollo
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False  # Solo en desarrollo
-
-# Configuración de almacenamiento
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
