@@ -1,5 +1,6 @@
 from django.db import models 
 import datetime
+from cloudinary.models import CloudinaryField  # ⚠️ Agregar este import
 
 class tipoCategoria(models.Model):
     NomCat = models.CharField(max_length=100, primary_key= True, verbose_name='Nombre de Categoria')
@@ -16,7 +17,7 @@ class Persona(models.Model):
 class Usuario(Persona):
     nombre = models.CharField('Nombre', max_length = 100)
     apellido = models.CharField('Apellido', default="vacio_", max_length = 100)
-    foto = models.ImageField(null=True, blank=True, upload_to='fotos/')
+    foto = CloudinaryField('image', folder='fotos/', null=True, blank=True)  # ✅ Cambiar a CloudinaryField
 
     def __str__(self):  
         return '{0},{1}'.format(self.apellido,self.nombre)
@@ -29,7 +30,7 @@ class Administrador(Persona):
 class Tienda(models.Model):
     Propietario = models.ForeignKey(Usuario, on_delete=models.CASCADE, verbose_name='Propietario', null=False,unique=True)
     NomTienda = models.CharField(max_length=200)
-    Logo = models.ImageField(null=True, blank=True, upload_to='logos/')
+    Logo = CloudinaryField('image', folder='logos/', null=True, blank=True)  # ✅ Cambiar a CloudinaryField
     DescripcionTienda = models.TextField(blank=True)
     Cant_productos = models.PositiveIntegerField(default=0)
     Cant_seguidores = models.PositiveIntegerField(default=0)  
@@ -59,7 +60,7 @@ class Producto(models.Model):
     Nomprod = models.CharField(max_length=200)
     DescripcionProd = models.CharField(blank=True, max_length=200)
     Stock = models.PositiveIntegerField(default=0)
-    FotoProd = models.ImageField(null=True, blank=True, upload_to='images/')
+    FotoProd = CloudinaryField('image', folder='productos/')
     Precio = models.DecimalField(max_digits=10, decimal_places=2)
     tipoCategoria = models.ForeignKey('tipoCategoria', on_delete=models.CASCADE, verbose_name='Tipo de Categoria', null=False)   
     Estado = models.BooleanField(default=False)  

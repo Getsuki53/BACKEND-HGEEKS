@@ -74,7 +74,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'corsheaders',
     'rest_framework.authtoken',
-    'cloudinary_storage',
+    'cloudinary_storage',  # ⚠️ DEBE ir ANTES de cloudinary
     'cloudinary',
 ]
 
@@ -117,6 +117,21 @@ MIDDLEWARE = [
 
 # Cloudinary como almacenamiento por defecto
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Configuración específica para Cloudinary (agregar después de DEFAULT_FILE_STORAGE)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='devfncp85'),
+    'API_KEY': config('CLOUDINARY_API_KEY', default='498194629494134'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default='_EhddXk2IJtd7bjU8ZTuCusdN0Y'),
+}
+
+# Forzar uso de Cloudinary en producción
+if 'RENDER' in os.environ:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Configuración de media (para desarrollo local)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Tu configuración existente de CORS
 CORS_ALLOW_ALL_ORIGINS = True
