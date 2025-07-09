@@ -26,6 +26,18 @@ SECRET_KEY = 'django-insecure-(0d6l3zs-8qx#fv_d0tdm=yoqotog!sd7c#txl96ucv1^8*x10
 DEBUG = True
 
 import os
+from decouple import config
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Configuración de Cloudinary
+cloudinary.config(
+    cloud_name=config('CLOUDINARY_CLOUD_NAME', default='devfncp85'),
+    api_key=config('CLOUDINARY_API_KEY', default='498194629494134'),
+    api_secret=config('CLOUDINARY_API_SECRET', default='_EhddXk2IJtd7bjU8ZTuCusdN0Y')
+)
+
 ALLOWED_HOSTS = ['*']
 # Base url to serve media files  
 MEDIA_URL = '/media/'  
@@ -49,6 +61,8 @@ INSTALLED_APPS = [
     'rest_framework', 
     'api.apps.ApiConfig',
     'corsheaders',    'rest_framework.authtoken',
+    'cloudinary_storage',  # <-- AGREGAR ANTES DE cloudinary
+    'cloudinary',          # <-- AGREGAR ESTO
 ]
 
 MIDDLEWARE = [
@@ -239,3 +253,6 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SECURE = False  # Solo en desarrollo
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False  # Solo en desarrollo
+
+# Configuración de almacenamiento
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
