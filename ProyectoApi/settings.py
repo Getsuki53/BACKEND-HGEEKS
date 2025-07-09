@@ -57,12 +57,8 @@ DATABASES = {
         'NAME': 'hgeeks',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'ssl': {
-                'ca': os.path.join(BASE_DIR, 'BaltimoreCyberTrustRoot.crt.pem'),
-                'ssl_disabled': False,
-                'ssl_verify_cert': False,
-                'ssl_verify_identity': False
-            } if 'RENDER' in os.environ else {},
+            'ssl_mode': 'REQUIRED',
+            'ssl': {} if 'RENDER' in os.environ else {},
         }
     }
 }
