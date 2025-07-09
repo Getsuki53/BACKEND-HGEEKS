@@ -58,7 +58,7 @@ DATABASES = {
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'ssl': {
-                'ssl_ca': '/opt/render/project/src/BaltimoreCyberTrustRoot.crt.pem'
+                'ssl_mode': 'REQUIRED',
             } if 'RENDER' in os.environ else {},
         }
     }
