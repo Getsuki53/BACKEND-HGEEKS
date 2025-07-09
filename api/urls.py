@@ -15,8 +15,6 @@ router.register('seguimientotienda', SeguimientoTiendaViewSet)
 router.register('producto', ProductoViewSet, basename='producto')
 router.register('productoadmin', ProductoAdminViewSet, basename='productoadmin')
 
-
-
 urlpatterns = [
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('login/', LoginView.as_view()),
