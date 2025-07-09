@@ -369,6 +369,27 @@ class TiendaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
     authentication_classes = [authentication.BasicAuthentication,]
 
+
+    # En tu archivo de views/endpoints de tienda
+    @action(detail=False, methods=['get'])
+    def VerificarPropietarioPorProducto(self, request):
+        producto_id = request.query_params.get('producto_id')
+        usuario_id = request.query_params.get('usuario_id')
+        
+        if not producto_id or not usuario_id:
+            return Response({'error': 'Debes enviar producto_id y usuario_id'}, status=400)
+        
+        try:
+            producto = Producto.objects.get(pk=producto_id)
+            if producto.tienda.Propietario.id == int(usuario_id):
+                return Response({'es_propietario': True, 'message': 'El usuario es propietario del producto'}, status=200)
+            else:
+                return Response({'es_propietario': False, 'message': 'El usuario no es propietario del producto'}, status=200)
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
     @action(detail=False, methods=['get'])
     def buscar(self, request):
         nombre = request.query_params.get('nombre', None)
