@@ -545,6 +545,23 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
         except Tienda.DoesNotExist:
             return Response({'error': 'Tienda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['get'])
+    def VerificarSeguimiento(self, request):
+        usuario_id = request.query_params.get('usuario_id')
+        tienda_id = request.query_params.get('tienda_id')
+        if not usuario_id or not tienda_id:
+            return Response({'error': 'Debes enviar usuario_id y tienda_id'}, status=400)
+        try:
+            usuario = Usuario.objects.get(pk=usuario_id)
+            tienda = Tienda.objects.get(pk=tienda_id)
+            seguimiento = SeguimientoTienda.objects.filter(usuario=usuario, tienda=tienda).first()
+            if seguimiento:
+                return Response({'sigue': True, 'message': 'El usuario sigue esta tienda'}, status=200)
+            else:
+                return Response({'sigue': False, 'message': 'El usuario no sigue esta tienda'}, status=200)
+        except (Usuario.DoesNotExist, Tienda.DoesNotExist):
+            return Response({'error': 'Usuario o Tienda no encontrado'}, status=404)
+
     @action(detail=False, methods=['post'])   
     def AgregarSeguimientoTienda(self, request):
         usuario_id = request.data.get('usuario_id')
@@ -556,11 +573,10 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
             tienda = Tienda.objects.get(pk=tienda_id)
             seguimiento, created = SeguimientoTienda.objects.get_or_create(usuario=usuario, tienda=tienda)
             #Subir la cantidad de seguidores de la tienda
-            if seguimiento.tienda:
-                seguimiento.tienda.CantidadSeguidores += 1
-                seguimiento.tienda.save()
             if created:
-                return Response({'message': 'Ahora sigues la tienda exitosamente'}, status=201)
+                seguimiento.tienda.Cant_seguidores += 1
+                seguimiento.tienda.save()
+                return Response({'message': 'Ahora sigues la tienda'}, status=201)
             else:
                 return Response({'message': 'Ya sigues esta tienda'}, status=200)
         except (Usuario.DoesNotExist, Tienda.DoesNotExist):
@@ -578,7 +594,10 @@ class SeguimientoTiendaViewSet(viewsets.ModelViewSet):
             seguimiento = SeguimientoTienda.objects.filter(usuario=usuario, tienda=tienda).first()
             if seguimiento:
                 seguimiento.delete()
-                return Response({'message': 'Has dejado de seguir la tienda exitosamente'}, status=200)
+                # Disminuir la cantidad de seguidores de la tienda
+                tienda.Cant_seguidores = max(0, tienda.Cant_seguidores - 1)
+                tienda.save()
+                return Response({'message': 'Has dejado de seguir la tienda'}, status=200)
             else:
                 return Response({'message': 'No estabas siguiendo esta tienda'}, status=404)
         except (Usuario.DoesNotExist, Tienda.DoesNotExist):
